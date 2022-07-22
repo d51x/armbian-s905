@@ -53,84 +53,72 @@ DEV_EMMC=/dev/mmcblk2
 PART_BOOT=${DEV_EMMC}p1
 PART_ROOT=${DEV_EMMC}p2
 DIR_INSTALL=/mnt/p2
-#DTB_FILE=/boot/dtb/amlogic/meson-gxbb-vega-s95-meta.dtb
 DTB_FILE=/boot${FDT}
 EMMC_AUTOSCRIPT_FILE=/boot/emmc2_autoscript
 UENV_FILE=/boot/uEnv3.txt
-#KERNEL_FILE=/boot/vmlinuz-5.15.55-ophub
 KERNEL_FILE=/boot${LINUX}
-#RAMDISK_FILE=/boot/uInitrd-5.15.55-ophub
 RAMDISK_FILE=/boot${INITRD}
 
 START_BOOT_SECTOR=0x6C00000
-###############################################################################################################
+
 echo -e "${STEPS} 1: clear all data after \"env\" partition"
-###############################################################################################################
-#dd if=/dev/zero of=${DEV_EMMC} bs=1M seek=644 count=6812
+dd if=/dev/zero of=${DEV_EMMC} bs=1M seek=644 count=6812
 
 
-###############################################################################################################
+
 echo -e "${STEPS} 2: make ROOTFS patition"
-###############################################################################################################
-#ROOTFS_UUID="$(cat /proc/sys/kernel/random/uuid)"
-#mkfs.ext4 -F -q -U ${ROOTFS_UUID} -L "ROOTFS_EMMC" ${PART_ROOT}
-#sleep 3
 
+ROOTFS_UUID="$(cat /proc/sys/kernel/random/uuid)"
+mkfs.ext4 -F -q -U ${ROOTFS_UUID} -L "ROOTFS_EMMC" ${PART_ROOT}
+sleep 3
 
-###############################################################################################################
 echo -e "${STEPS} 3: copy ROOTFS to EMMC"
-###############################################################################################################
-# cd /
-# mkdir ${DIR_INSTALL}
-# mount -t ext4 ${PART_ROOT} ${DIR_INSTALL}
-# mkdir -p ${DIR_INSTALL}/{boot/,dev/,media/,mnt/,proc/,run/,sys/} && sync
 
-# COPY_SRC="etc home lib64 opt root selinux srv usr var"
-# for src in ${COPY_SRC}; do
-#     echo -e "${INFO} Copy the [ ${src} ] directory."
-#     tar -cf - ${src} | (
-#         cd ${DIR_INSTALL}
-#         tar -xf -
-#     )
-#     sync
-# done
+cd /
+mkdir ${DIR_INSTALL}
+mount -t ext4 ${PART_ROOT} ${DIR_INSTALL}
+mkdir -p ${DIR_INSTALL}/{boot/,dev/,media/,mnt/,proc/,run/,sys/} && sync
 
-# ln -sf /usr/bin ${DIR_INSTALL}/bin
-# ln -sf /usr/lib ${DIR_INSTALL}/lib
-# ln -sf /usr/sbin ${DIR_INSTALL}/sbin
-# ln -sf /var/tmp ${DIR_INSTALL}/tmp
-# sync
+COPY_SRC="etc home lib64 opt root selinux srv usr var"
+for src in ${COPY_SRC}; do
+    echo -e "${INFO} Copy the [ ${src} ] directory."
+    tar -cf - ${src} | (
+        cd ${DIR_INSTALL}
+        tar -xf -
+    )
+    sync
+done
+
+ln -sf /usr/bin ${DIR_INSTALL}/bin
+ln -sf /usr/lib ${DIR_INSTALL}/lib
+ln -sf /usr/sbin ${DIR_INSTALL}/sbin
+ln -sf /var/tmp ${DIR_INSTALL}/tmp
+sync
 
 echo -e "${INFO} Generate the new fstab file."
-# fstab_mount_string="defaults,noatime,errors=remount-ro"
-# rm -f ${DIR_INSTALL}/etc/fstab 2>/dev/null && sync
+fstab_mount_string="defaults,noatime,errors=remount-ro"
+rm -f ${DIR_INSTALL}/etc/fstab 2>/dev/null && sync
 
-# cat >${DIR_INSTALL}/etc/fstab <<EOF
-# ${PART_ROOT}  /        ext4     ${fstab_mount_string}     0 1
-# tmpfs                /tmp     tmpfs                   defaults,nosuid           0 0
+cat >${DIR_INSTALL}/etc/fstab <<EOF
+${PART_ROOT}  /        ext4     ${fstab_mount_string}     0 1
+tmpfs                /tmp     tmpfs                   defaults,nosuid           0 0
 
-# EOF
+EOF
 
-# sync && sleep 3
-# umount ${DIR_INSTALL}
-# rm -rf ${DIR_INSTALL}
+sync && sleep 3
+umount ${DIR_INSTALL}
+rm -rf ${DIR_INSTALL}
 
 echo -e "${INFO} DONE. ROOTFS was copied to EMMC"
 
-###############################################################################################################
 echo -e "${STEPS} 4: prepare EMMC partition for BOOT"
-###############################################################################################################
 
 echo -e "${INFO} Clear partition for BOOT"
-# dd if=/dev/zero of=${PART_BOOT}  bs=512 count=400
+dd if=/dev/zero of=${PART_BOOT}  bs=512 count=400
 
-###############################################################################################################
+
 echo -e "${INFO} Compile new emmc_autoscript"
-###############################################################################################################
-#
-# NOTE!!! file will be generated automaticaly *** you don't must mannually create emmc2_autoscript.cmd with correct values 
-#
-###############################################################################################################
+
 let start_sector=$START_BOOT_SECTOR/512
 AUTOSCRIPT_BLOCK_CNT=3
 
@@ -194,41 +182,26 @@ EOF
 
 mkimage -C none -A arm -T script -d ${EMMC_AUTOSCRIPT_FILE}.cmd ${EMMC_AUTOSCRIPT_FILE} >/dev/null
 
-###############################################################################################################
 echo -e "${INFO} Copy emmc_autoscript to BOOT partition"
-###############################################################################################################
 seek_block=0
 fsize=`wc -c ${EMMC_AUTOSCRIPT_FILE} | awk '{print $1}'`
-# echo -e "${INFO}\t file: ${EMMC_AUTOSCRIPT_FILE} \t size=${fsize} \t seek=${seek_block}"
-# dd if=${EMMC_AUTOSCRIPT_FILE} of=${PART_BOOT} bs=512
+dd if=${EMMC_AUTOSCRIPT_FILE} of=${PART_BOOT} bs=512
 
-###############################################################################################################
 echo -e "${INFO} Copy dtb-file to BOOT partition"
-###############################################################################################################
 let seek_block=$seek_block+$AUTOSCRIPT_BLOCK_CNT
-# echo -e "${INFO}\t file: ${DTB_FILE} \t size=${dtb_fsize} \t seek=${seek_block}"
-# dd if=${DTB_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
+dd if=${DTB_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
 
-###############################################################################################################
 echo -e "${INFO} Copy uEnv.txt to BOOT partition"
-###############################################################################################################
 let seek_block=$seek_block+$dtb_block_cnt
-# echo -e "${INFO}\t file: ${UENV_FILE} \t size=${uenv_fsize} \t seek=${seek_block}"
-# dd if=${UENV_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
+dd if=${UENV_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
 
-###############################################################################################################
 echo -e "${INFO} Copy kernel zImage to BOOT partition"
-###############################################################################################################
 let seek_block=$seek_block+$uenv_block_cnt
-# echo -e "${INFO}\t file: ${KERNEL_FILE} \t size=${kernel_fsize} \t seek=${seek_block}"
-# dd if=${KERNEL_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
+dd if=${KERNEL_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
 
-###############################################################################################################
 echo -e "${INFO} Copy ramdisk uInitrd to BOOT partition"
-###############################################################################################################
 let seek_block=$seek_block+$kernel_block_cnt
-# echo -e "\t file: ${RAMDISK_FILE} \t size=${initrd_fsize} \t seek=${seek_block}"
-# dd if=${RAMDISK_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
+dd if=${RAMDISK_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
 
 echo -e "${INFO} DONE. BOOTFS was copied to EMMC"
 echo -e "${SUCCESS} Successful installed, please unplug the USB, re-insert the power supply to start the armbian."
