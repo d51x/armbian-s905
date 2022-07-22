@@ -42,12 +42,13 @@ Partition table get from SPL is :
 https://github.com/laris/Phicomm-N1/blob/master/refs/partition-table-format-of-phicomm-n1.md
 https://github.com/codesnake/uboot-amlogic/blob/master/include/emmc_partitions.h
 
-EMMC это блочное устройство для встраиваемых систем. Чтобы дать возможность ядру понять какие разделы есть на EMMC, нужно воспользоваться параметром ядра **blkdevparts**
+EMMC это блочное устройство для встраиваемых систем. Чтобы дать возможность ядру понять какие разделы есть на EMMC, нужно воспользоваться параметром ядра **blkdevparts** (https://github.com/so61pi/examples/blob/master/linux-blkdevparts/readme.md)
 Ядро должно быть собрано с такой опцией.
 В armdian от balbes150 в ядре включена такая опция.
 В armbian от ophub (https://github.com/ophub/amlogic-s9xxx-armbian) такая опция выключена.
 Чтобы ее включить, надо пересобрать ядро с поддержкой **blkdevparts** (**CONFIG_CMDLINE_PARTITION=Y**) 
 https://github.com/ophub/amlogic-s9xxx-armbian/tree/main/compile-kernel
+
 PS как пересобирать ядро, пока писать не буду. Делал это всего лишь один раз по инструкции выше и все получилось.
 
 Как только ядро получит поддержку **blkdevparts**, мы сможем указать ядру, какие разделы есть на EMMC.
