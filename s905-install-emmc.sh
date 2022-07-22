@@ -178,8 +178,8 @@ setenv boot_start booti \${kernel_addr} \${initrd_addr} \${dtb_addr}
 setenv addmac 'if printenv mac; then setenv bootargs \${bootargs} mac=\${mac}; elif printenv eth_mac; then setenv bootargs \${bootargs} mac=\${eth_mac}; elif printenv ethaddr; then setenv bootargs \${bootargs} mac=\${ethaddr}; fi'
 
 echo "Read mmc partitions"
-echo "Read uEnv2.txt from EMMC"
-if mmc read \${env_addr} \${env_sector} \${env_block_cnt}; then env import -t \${env_addr} \${env_size};setenv bootargs \${APPEND};printenv bootargs;echo "Read zImage from EMMC";if mmc read \${kernel_addr} \${kernel_sector} \${kernel_block_cnt}; then echo "Read uInitrd from EMMC";if mmc read \${initrd_addr} \${initrd_sector} \${initrd_block_cnt}; then echo "Read FTD from EMMC";if mmc read \${dtb_addr} \${dtb_sector} \${dtb_block_cnt}; then run addmac;echo "Start bootin system...";run boot_start;fi;fi;fi;fi
+echo "Read ${UENV_FILE} from EMMC"
+if mmc read \${env_addr} \${env_sector} \${env_block_cnt}; then env import -t \${env_addr} \${env_size};setenv bootargs \${APPEND};printenv bootargs;echo "Read zImage from EMMC";if mmc read \${kernel_addr} \${kernel_sector} \${kernel_block_cnt}; then echo "Read uInitrd from EMMC";if mmc read \${initrd_addr} \${initrd_sector} \${initrd_block_cnt}; then echo "Read FDT from EMMC";if mmc read \${dtb_addr} \${dtb_sector} \${dtb_block_cnt}; then run addmac;echo "Start booting system...";run boot_start;fi;fi;fi;fi
 EOF
 
 mkimage -C none -A arm -T script -d ${EMMC_AUTOSCRIPT_FILE}.cmd ${EMMC_AUTOSCRIPT_FILE} >/dev/null
@@ -187,22 +187,27 @@ mkimage -C none -A arm -T script -d ${EMMC_AUTOSCRIPT_FILE}.cmd ${EMMC_AUTOSCRIP
 echo -e "${INFO} Copy emmc_autoscript to BOOT partition"
 seek_block=0
 fsize=`wc -c ${EMMC_AUTOSCRIPT_FILE} | awk '{print $1}'`
+echo -e "${INFO}\t file: ${EMMC_AUTOSCRIPT_FILE} \t size=${fsize} \t seek=${seek_block}"
 dd if=${EMMC_AUTOSCRIPT_FILE} of=${PART_BOOT} bs=512
 
 echo -e "${INFO} Copy dtb-file to BOOT partition"
 let seek_block=$seek_block+$AUTOSCRIPT_BLOCK_CNT
+echo -e "${INFO}\t file: ${DTB_FILE} \t size=${dtb_fsize} \t seek=${seek_block}"
 dd if=${DTB_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
 
 echo -e "${INFO} Copy uEnv.txt to BOOT partition"
 let seek_block=$seek_block+$dtb_block_cnt
+echo -e "${INFO}\t file: ${UENV_FILE} \t size=${uenv_fsize} \t seek=${seek_block}"
 dd if=${UENV_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
 
 echo -e "${INFO} Copy kernel zImage to BOOT partition"
 let seek_block=$seek_block+$uenv_block_cnt
+echo -e "${INFO}\t file: ${KERNEL_FILE} \t size=${kernel_fsize} \t seek=${seek_block}"
 dd if=${KERNEL_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
 
 echo -e "${INFO} Copy ramdisk uInitrd to BOOT partition"
 let seek_block=$seek_block+$kernel_block_cnt
+echo -e "\t file: ${RAMDISK_FILE} \t size=${initrd_fsize} \t seek=${seek_block}"
 dd if=${RAMDISK_FILE} of=${PART_BOOT} bs=512 seek=${seek_block}
 
 echo -e "${INFO} DONE. BOOTFS was copied to EMMC"
