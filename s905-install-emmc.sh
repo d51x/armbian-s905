@@ -43,6 +43,8 @@ SUCCESS="[\033[92m SUCCESS \033[0m]"
 # "env" partition before "cache" and all space after "env" could be used for BOOT and ROOT partitions,
 # because original "cache" partition size is 512 Mb 
 # Unfortunately I don't try yet
+# uEnv.txt is a base file for kernel, ramfs, dtb
+# copy uEnv.txt to uEnv_emmc.txt and change root=UUID=61fc7a35-...... to root=/dev/mmcblk2p2
 ###############################################################################################################
 
 echo -e "${STEPS} Start install armbian to emmc..."
@@ -55,7 +57,7 @@ PART_ROOT=${DEV_EMMC}p2
 DIR_INSTALL=/mnt/p2
 DTB_FILE=/boot${FDT}
 EMMC_AUTOSCRIPT_FILE=/boot/emmc2_autoscript
-UENV_FILE=/boot/uEnv3.txt
+UENV_FILE=/boot/uEnv_emmc.txt
 KERNEL_FILE=/boot${LINUX}
 RAMDISK_FILE=/boot${INITRD}
 
