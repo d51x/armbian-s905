@@ -85,3 +85,18 @@ Writing to MMC(1)... done
 Здесь видно, что какой то CRC таблицы разделов, который в  SPL не соответствует нашей таблице, все наши скрипты перезаписываются дефолтными.
 Видно, что uboot пытается получить env по адресу 0x27400000 и у env есть CRC, а мы по этому адресу уже заливали ROOTFS
 т.е. можно предположить, что адрес раздела env захардкожен, а не достается из reserved
+
+Судя по коду u-boot
+https://github.com/codesnake/uboot-amlogic/blob/c0b0b8cc9bd5901ced2e929ea87b99fae52d528c/drivers/mmc/emmc_partitions.c именно так и есть, жесткая структура первых четырех разделов
+
+```
+#define PARTITION_ELEMENT(na, sz, flags) {.name = na, .size = sz, .mask_flags = flags,}
+struct partitions emmc_partition_table[]={
+    PARTITION_ELEMENT(MMC_BOOT_NAME, MMC_BOOT_DEVICE_SIZE, 0),
+    PARTITION_ELEMENT(MMC_RESERVED_NAME, MMC_RESERVED_SIZE, 0),
+    PARTITION_ELEMENT(MMC_CACHE_NAME, 0, 0),                    // the size and flag should be get from spl
+    // PARTITION_ELEMENT(MMC_KEY_NAME, MMC_KEY_SIZE, 0),
+    // PARTITION_ELEMENT(MMC_SECURE_NAME, MMC_SECURE_SIZE, 0),
+    PARTITION_ELEMENT(MMC_ENV_NAME, MMC_ENV_SIZE, 0),
+};
+```
