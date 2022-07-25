@@ -1,0 +1,86 @@
+Попытка изменить размер разделов, раздел cache поменять место с env
+
+Оригинальная таблица
+```
+#   Note: EMMC has partitions: 
+#        name                        offset              size              flag
+#================================================================================   
+#   0: bootloader                         0            400000                  0
+#   1: reserved                     2400000           4000000                  0
+#   2: cache                        6c00000          20000000                  2    
+#   3: env                         27400000            800000                  0    
+#   4: logo                        28400000           2000000                  1    
+#   5: recovery                    2ac00000           2000000                  1   	
+#   6: rsv                         2d400000            800000                  1 	
+#   7: tee                         2e400000            800000                  1
+#   8: crypt                       2f400000           2000000                  1
+#   9: misc                        31c00000           2000000                  1
+#  10: instaboot                   34400000          20000000                  1
+#  11: boot                        54c00000           2000000                  1
+#  12: system                      57400000          60000000                  1
+#  13: data                        b7c00000         11a400000                  4
+```
+
+Модифицированная таблица
+```
+#   Note: EMMC has partitions: 	
+#        name                        offset              size              flag				end
+#=======================================================================================================   
+#   0: bootloader                         0            400000                  0
+#   1: reserved                     2400000           4000000                  0
+#   2: env                        	6c00000            800000                  0 			7400000   
+#   3: cache                        7C00000          20000000                  2    	    AE00000     BOOT_FS size: 3200000  (50 Mb) 
+#   4: logo                        28400000           2000000                  1    
+#   5: recovery                    2ac00000           2000000                  1   	
+#   6: rsv                         2d400000            800000                  1 	
+#   7: tee                         2e400000            800000                  1
+#   8: crypt                       2f400000           2000000                  1
+#   9: misc                        31c00000           2000000                  1
+#  10: instaboot                   34400000          20000000                  1
+#  11: boot                        54c00000           2000000                  1
+#  12: system                      57400000          60000000                  1
+#  13: data                        b7c00000         11a400000                  4
+#
+#   edit your uEnv.txt
+#   add the followin to APPEND param:
+#      'blkdevparts=mmcblk2:50M@124M(cache),-M@174M(rootfs)'
+#
+#   BOOT_FS size 50 Mb is enought
+```
+
+При запуске системы в логах
+```
+mmc_read_partition_tbl: mmc read partition OK!
+mmc_partition_verify: partition[2] is different
+Partition table verified ERROR!
+Following is the partition table stored in eMMC/TSD:
+        name                        offset              size              flag
+===================================================================================
+   0: bootloader                         0            400000                  0
+   1: reserved                     2400000           4000000                  0
+   2: env                          6c00000            800000                  0
+   3: cache                        7c00000          20000000                  2
+   4: logo                        28400000           2000000                  1
+   5: recovery                    2ac00000           2000000                  1
+   6: rsv                         2d400000            800000                  1
+   7: tee                         2e400000            800000                  1
+   8: crypt                       2f400000           2000000                  1
+   9: misc                        31c00000           2000000                  1
+  10: instaboot                   34400000          20000000                  1
+  11: boot                        54c00000           2000000                  1
+  12: system                      57400000          60000000                  1
+  13: data                        b7c00000         11a400000                  4
+mmc write lba=0x12000, blocks=0x2
+mmc write lba=0x12002, blocks=0x2
+mmc_write_partition_tbl: mmc write partition OK!
+eMMC/TSD partition table have been checked OK!
+mmc env offset: 0x27400000
+*** Warning - bad CRC, using default environment
+
+Saving Environment to aml-storage...
+mmc env offset: 0x27400000
+Writing to MMC(1)... done
+```
+
+Здесь видно, что какой то CRC таблицы разделов, который в  SPL не соответствует нашей таблице, все наши скрипты перезаписываются дефолтными.
+Видно, что uboot пытается получить env по адресу 0x27400000 и у env есть CRC, а мы по этому адресу уже заливали ROOTFS
