@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_VER="2.0"
+
 # Set font color
 STEPS="[\033[95m STEPS \033[0m]"
 INFO="[\033[94m INFO \033[0m]"
@@ -39,10 +41,11 @@ SUCCESS="[\033[92m SUCCESS \033[0m]"
 # other partitions 4 - 13 can be combined to one partition ROOTFS 
 # and partition 2 (cache) we can use as BOOTFS partition.
 #
-# May be if change partitions structure which contains in "reserved" partition we can move 
-# "env" partition before "cache" and all space after "env" could be used for BOOT and ROOT partitions,
-# because original "cache" partition size is 512 Mb 
-# Unfortunately I don't try yet
+# It can with chaged bootloader. Now bootloader compare partition table in reserved with own hardcoded partition table and use address 0x27400000 for env.
+# Needs chage bootloader and reserved partition.
+#
+#
+#
 # uEnv.txt is a base file for kernel, ramfs, dtb
 # copy uEnv.txt to uEnv_emmc.txt and change root=UUID=61fc7a35-...... to root=/dev/mmcblk2p2
 ###############################################################################################################
@@ -50,7 +53,8 @@ SUCCESS="[\033[92m SUCCESS \033[0m]"
 
 
 
-echo -e "${STEPS} Start install armbian to emmc..."
+echo -e "${SUCCESS} Start install armbian to emmc..."
+echo -e "${SUCCESS} Script version: ${SCRIPT_VER}"
 
 source /boot/uEnv.txt 2>/dev/null
 
@@ -69,7 +73,7 @@ START_BOOT_SECTOR=0x6C00000
 
 clean_boot_partition() {
     echo -e "${STEPS} clear boot partition"
-    dd if=/dev/zero of=${DEV_EMMC} bs=1M seek=108 count=512 conv=fsync
+    dd if=/dev/zero of=${DEV_EMMC} bs=1M seek=108 count=512 conv=fsync status=none
 }
 
 create_emmc_autoscript() {
@@ -148,34 +152,34 @@ create_boot_partition() {
     seek_block=0
     fsize=`wc -c ${EMMC_AUTOSCRIPT_FILE} | awk '{print $1}'`
     echo -e "${INFO}\t file: ${EMMC_AUTOSCRIPT_FILE} \t\t\t size=${fsize} \t seek=${seek_block}"
-    dd if=${EMMC_AUTOSCRIPT_FILE} of=${PART_BOOT} bs=512 conv=fsync
+    dd if=${EMMC_AUTOSCRIPT_FILE} of=${PART_BOOT} bs=512 conv=fsync status=none 
 
     echo -e "${INFO} Copy dtb-file to BOOT partition"
     let seek_block=$seek_block+$AUTOSCRIPT_BLOCK_CNT
     echo -e "${INFO}\t file: ${DTB_FILE} \t\t\t size=${dtb_fsize} \t seek=${seek_block}"
-    dd if=${DTB_FILE} of=${PART_BOOT} bs=512 seek=${seek_block} conv=fsync
+    dd if=${DTB_FILE} of=${PART_BOOT} bs=512 seek=${seek_block} conv=fsync status=none
 
     echo -e "${INFO} Copy uEnv.txt to BOOT partition"
     let seek_block=$seek_block+$dtb_block_cnt
     echo -e "${INFO}\t file: ${UENV_FILE} \t\t\t size=${uenv_fsize} \t seek=${seek_block}"
-    dd if=${UENV_FILE} of=${PART_BOOT} bs=512 seek=${seek_block} conv=fsync
+    dd if=${UENV_FILE} of=${PART_BOOT} bs=512 seek=${seek_block} conv=fsync status=none
 
     echo -e "${INFO} Copy kernel zImage to BOOT partition"
     let seek_block=$seek_block+$uenv_block_cnt
     echo -e "${INFO}\t file: ${KERNEL_FILE} \t\t\t size=${kernel_fsize} \t seek=${seek_block}"
-    dd if=${KERNEL_FILE} of=${PART_BOOT} bs=512 seek=${seek_block} conv=fsync
+    dd if=${KERNEL_FILE} of=${PART_BOOT} bs=512 seek=${seek_block} conv=fsync status=none
 
     echo -e "${INFO} Copy ramdisk uInitrd to BOOT partition"
     let seek_block=$seek_block+$kernel_block_cnt
     echo -e "\t file: ${RAMDISK_FILE} \t\t\t size=${initrd_fsize} \t seek=${seek_block}"
-    dd if=${RAMDISK_FILE} of=${PART_BOOT} bs=512 seek=${seek_block} conv=fsync
+    dd if=${RAMDISK_FILE} of=${PART_BOOT} bs=512 seek=${seek_block} conv=fsync status=none
 
     echo -e "${INFO} DONE. BOOTFS was copied to EMMC"
 }
 
 clean_root_partition() {
     echo -e "${STEPS} clear root partition"
-    dd if=/dev/zero of=${DEV_EMMC} bs=1M seek=644 count=6812 conv=fsync
+    dd if=/dev/zero of=${DEV_EMMC} bs=1M seek=644 count=6812 conv=fsync status=none
 }
 
 create_root_partition() {
@@ -224,12 +228,12 @@ EOF
     echo -e "${INFO} DONE. ROOTFS was copied to EMMC"
 }
 
-clean_root_partition
+#clean_boot_partition
+create_boot_partition
+
+#clean_root_partition
 create_root_partition
 copy_rootfs
-
-clean_boot_partition
-create_boot_partition
 
 
 echo -e "${SUCCESS} Successful installed, please unplug the USB, re-insert the power supply to start the armbian."
