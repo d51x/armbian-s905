@@ -100,3 +100,13 @@ struct partitions emmc_partition_table[]={
     PARTITION_ELEMENT(MMC_ENV_NAME, MMC_ENV_SIZE, 0),
 };
 ```
+
+
+При выполнении команды видим тоже самое
+```
+gxb_p200_v1#saveenv
+Saving Environment to aml-storage...
+mmc env offset: 0x27400000
+Writing to MMC(1)... done
+
+```
