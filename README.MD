@@ -2,7 +2,7 @@
 
 У меня устройтво на старом Amlogic s905 (самый первый из серии 905): ***Thronsmart Vega S95 Meta 2 Gb RAM, 8 Gb ROM***.
 
-У него на борту EMMC размером 8 Gb, на самом деле 7,2 Gb
+У него на борту **EMMC** размером 8 Gb, на самом деле 7,2 Gb
 ```
 Disk /dev/mmcblk2: 7,28 GiB, 7818182656 bytes, 15269888 sectors
 Units: sectors of 1 * 512 = 512 bytes
@@ -10,9 +10,9 @@ Sector size (logical/physical): 512 bytes / 512 bytes
 I/O size (minimum/optimal): 512 bytes / 512 bytes
 ```
 
-Все существующие сборки armbian не умеют загружаться с emmc на Amlogic s905.
+Все существующие сборки armbian не умеют загружаться с **emmc** на Amlogic s905.
 
-Если вы запустите скрипт armbian-install.sh, то вы окирпичите свой девайс. Из кирпича девайс вывести не сложно с помощью прошивки android и USB Burning Tool.
+Если вы запустите скрипт **armbian-install.sh**, то вы окирпичите свой девайс. Из кирпича девайс вывести не сложно с помощью прошивки android и USB Burning Tool.
 
 Более того, если загрузиться в SD/USB, то реальные разделы с EMMC (обычно это /dev/mmcblk2) не будет видно.
 
@@ -53,7 +53,7 @@ PS как пересобирать ядро, пока писать не буду
 
 Как только ядро получит поддержку **blkdevparts**, мы сможем указать ядру, какие разделы есть на EMMC.
 
-Собранные kernel и ramdisk можно взять здесь d51x/armbian-s905/tree/main/example
+Собранные kernel и ramdisk можно взять здесь [d51x/armbian-s905/tree/main/emmc_install/files](http://github.com/d51x/armbian-s905/tree/main/emmc_install/files "d51x/armbian-s905/tree/main/emmc_install/files")
 
 * kernel - vmlinuz-5.15.55-ophub.7z (распаковать)
 * ramdisk - uInitrd-5.15.55-ophub
@@ -295,4 +295,36 @@ PSSS Если скрипт отработал, но система не груз
 
 Передернуть питание.
 
+
+------------
+
+### Дополнение 1
+
+Нет необходимости занулять разделы командой dd if=/dev/zero, т.к. все равно в псевдо BOOT раздел файлы загружаются через dd, а раздел ext4 форматируется.
+
+Это существенно позволило уменьшить время работы скрипта по переносу.
+
+### Дополнение 2
+
+Удалось увеличить размер раздела rootfs примерно на 500 Mb, теперь он имеет размер 7.2 Gb.
+Теперь почти вся eMMC в нашем распоряжении.
+```
+@armbian:~$ lsblk
+NAME         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+mmcblk2      179:0    0  7,3G  0 disk
+└─mmcblk2p1  179:1    0  7,2G  0 part /var/log.hdd
+```
+Этого удалось достичь не изменением структуры разделов ([здесь](https://github.com/d51x/armbian-s905/tree/main/docs/s905-resize-partitions.txt "здесь") я пытался это описать и воспроизвести), а следующим методом:
+- файлы emmc_autoscript, uEnv, dtb и kernel я поместил в свободную область между разделами bootloader и reserved. Там свободно 32 Mb.
+- файл initrd я поместил в выделенную зону (16 Mb) после раздела reserved
+- все остальное место, начиная со 116Mb от начала и до конца eMMC выделено под ext4 раздел rootfs
+- раздел env остался не тронутым, хотя и лежит внутри области rootfs, но при форматировании rootfs мы указываем, что он имеет badblocks начиная с 0x27400000 от начала eMMC (или 512 Mb от начала раздела rootfs)
+```
+mke2fs -F -q -O ^64bit -t ext4 -m 0 /dev/mmcblk2p1 -b 4096 -l /tmp/reservedblks -L "ROOTFS_EMMC" > /dev/null
+```
+/tmp/reservedblks - файл, который содержит номера секторов бед блоков, которые относятся к env разделу
+
+Информацию нашел здесь https://github.com/laris/Phicomm-N1/blob/master/refs/use-single-partition-to-boot-linux-on-phicomm-n1.md
+
+На основании этого сделал новый скрипт переноса на emmc - [s905-install-emmc.sh](https://github.com/d51x/armbian-s905/tree/main/emmc_install/v2 "s905-install-emmc.sh")
 
