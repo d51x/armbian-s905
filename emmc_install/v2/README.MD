@@ -29,7 +29,9 @@ blkdevparts=mmcblk2:-@116M(rootfs)
 	- aml_autoscript
 	- aml_autoscript.zip
 	- s905-install-emmc.sh
-	- uEnv.txt
+	- uEnv.txt 
+		- либо копируем файл и в нем заменяем UUID на значение из оригинального файла uEnv.txt
+		- либо в оригинальном файле в APPEND дописываем ***'blkdevparts=mmcblk2:-@116M(rootfs)'*** после ***rootfstype=ext4***
 	- uEnv_emmc.txt
 	- [uInitrd-5.15.55-ophub](https://github.com/d51x/armbian-s905/tree/main/emmc_install/files "uInitrd-5.15.55-ophub")
 	- [vmlinuz-5.15.55-ophub.7z](https://github.com/d51x/armbian-s905/tree/main/emmc_install/files "vmlinuz-5.15.55-ophub.7z") (необходимо распаковать архив)
