@@ -1,0 +1,66 @@
+### Компиляция ядра
+
+Основной материал по компиляции ядра находится на соответствующей [странице](https://github.com/ophub/amlogic-s9xxx-armbian/tree/main/compile-kernel "странице") репозитория ophub.
+
+Для справки: компиляция ядра на моем локальной машине под WSL2 в Windows 10 занимает порядка 90 минут.
+
+    Server CPU configuration information: 
+          8  Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz 
+    
+    Server memory usage: 
+                  total        used        free      shared  buff/cache   available
+    Mem:           12Gi       765Mi       5,3Gi       0,0Ki       6,3Gi        11Gi
+    Swap:         4,0Gi       5,0Mi       4,0Gi 
+    
+### Добавляем поддержку blkdevparts
+
+Для это необходимо в config для сборки ядра добавить 
+   ** CONFIG_CMDLINE_PARTITION=Y**
+   
+Преднастроенные конфиги хранятся здесь
+amlogic-s9xxx-armbian/compile-kernel/tools/config/
+
+Выбираем нужны конфиг и в нем меняем значение
+    
+    Было:
+	# CONFIG_CMDLINE_PARTITION is not set
+    
+    Стало:
+    CONFIG_CMDLINE_PARTITION=y
+	
+
+Далее переходим в папк amlogic-s9xxx-armbian и запускаем сборку ядра
+`sudo ./recompile -k 5.15.15 -a false -n "-d51x"`
+
+Запустится процесс подготовки и сборки, сначала скачаются исходники ядра, затем впапку с исходниками ядра копируется config, если там отсутствует файл .config
+
+В нашем случает копируется конфиг 
+`/amlogic-s9xxx-armbian/compile-kernel/tools/config/config-5.15.56`
+
+Если запускать повторную сборку ядра, то уже будет использоваться тот конфиг, который лежит в папке ядра, т.е. копирования не будет.
+
+Это надо иметь в виду, если мы запустили сборку без правки конфига, а потом решили поправить конфиг.
+
+В этом случает надо править либо .config в папке ядра, либо конфиг в /tools/config.
+
+Еще момент, может появиться обновленный конфиг нужной ветки ядра, и если запустить сборку, то скорее всего он не подцепится, а будет использован .config
+
+После завершения сборки ядра мы получает в папке /amlogic-s9xxx-armbian/compile-kernel/output/ файл 5.15.15.tar.gz
+
+Содержимое
+```
+boot-5.15.15-d51x.tar.gz
+dtb-allwinner-5.15.15-d51x.tar.gz
+dtb-amlogic-5.15.15-d51x.tar.gz
+dtb-rockchip-5.15.15-d51x.tar.gz
+header-5.15.15-d51x.tar.gz
+modules-5.15.15-d51x.tar.gz
+```
+Нам нужно
+1. из boot-5.15.15-d51x.tar.gz достать файлы и положить их в /boot на устройстве (SD карте)
+	uInitrd-5.15.15-d51x
+	vmlinuz-5.15.15-d51x
+2. из modules-5.15.15-d51x.tar.gz достать содержимое - папку 5.15.57-d51x и поместить ее в /usr/lib/moduler на устройстве(SD карте)
+3. в файле uEnv.txt прописать пути к INITRD и LINUX из п.1 соответственно
+
+
