@@ -53,10 +53,11 @@ PS как пересобирать ядро, пока писать не буду
 
 Как только ядро получит поддержку **blkdevparts**, мы сможем указать ядру, какие разделы есть на EMMC.
 
-Собранные kernel и ramdisk можно взять здесь [d51x/armbian-s905/tree/main/emmc_install/files](http://github.com/d51x/armbian-s905/tree/main/emmc_install/files "d51x/armbian-s905/tree/main/emmc_install/files")
+Собранные kernel и ramdisk можно [взять здесь](https://disk.yandex.ru/d/4e6y3Ig8kLx6Xw "взять здесь")
 
-* kernel - vmlinuz-5.15.55-ophub.7z (распаковать)
-* ramdisk - uInitrd-5.15.55-ophub
+* kernel - vmlinuz-5.15.15-d51x
+* ramdisk - uInitrd-5.15.15-d51x
+* modules - внутри архива папка 5.15.57-d51x, ее поместить в usr/lib/modules
 
 Это делает в файле uEnv.txt в параметре APPEND.
 Нужно добавить следующее

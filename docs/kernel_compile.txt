@@ -63,4 +63,5 @@ modules-5.15.15-d51x.tar.gz
 2. из modules-5.15.15-d51x.tar.gz достать содержимое - папку 5.15.57-d51x и поместить ее в /usr/lib/moduler на устройстве(SD карте)
 3. в файле uEnv.txt прописать пути к INITRD и LINUX из п.1 соответственно
 
+Результаты можно взять [здесь](https://disk.yandex.ru/d/4e6y3Ig8kLx6Xw "здесь")
 
