@@ -26,18 +26,21 @@ blkdevparts=mmcblk2:-@116M(rootfs)
 
 ### Как сделать перенос
 1. подготавливаем SD/USB флешку с armbian (версия [ophub](https://github.com/ophub/amlogic-s9xxx-armbian "ophub"))
-2. копируем на флешку (раздел BOOT) файлы:
-	- aml_autoscript
-	- aml_autoscript.zip
-	- s905-install-emmc.sh
-	- uEnv.txt 
-		- либо копируем файл и в нем заменяем UUID на значение из оригинального файла uEnv.txt
-		- либо в оригинальном файле в APPEND дописываем ***'blkdevparts=mmcblk2:-@116M(rootfs)'*** после ***rootfstype=ext4***
-	- uEnv_emmc.txt
-	- [uInitrd-5.15.55-ophub](https://github.com/d51x/armbian-s905/tree/main/emmc_install/files "uInitrd-5.15.55-ophub")
-	- [vmlinuz-5.15.55-ophub.7z](https://github.com/d51x/armbian-s905/tree/main/emmc_install/files "vmlinuz-5.15.55-ophub.7z") (необходимо распаковать архив)
-3. вставляем SD/USB флешку в приставку и загружаемся
-4. выполняем команду
+2. копируем на флешку файлы:
+	- в раздел BOOT 
+		- aml_autoscript
+		- aml_autoscript.zip
+		- s905-install-emmc.sh
+		- uEnv.txt 
+			- либо копируем файл и в нем заменяем UUID на значение из оригинального файла uEnv.txt
+			- либо в оригинальном файле в APPEND дописываем ***'blkdevparts=mmcblk2:-@116M(rootfs)'*** после ***rootfstype=ext4***
+		- uEnv_emmc.txt
+		- [uInitrd-5.15.15-d51x](https://disk.yandex.ru/d/1syrcOrsjl_GBw)
+		- [vmlinuz-5.15.15-d51x](https://disk.yandex.ru/d/INkQRlKjFJXxHw) 
+
+3. вставляем SD/USB флешку в приставку и загружаемся (wifi, bt и может что то еще не будет работать, т.к. не загружены модули ядра)
+4. 	Чтобы все заработало, скопируем модули ядра в /usr/lib/modules из архива [modules-5.15.15-d51x.tar.gz](https://disk.yandex.ru/d/u9taHR1YQoD83A) 
+5. Теперь приступаем к установке. Выполняем команду
 	```
 	sudo /bin/bash /boot/s905-install-emmc.sh
 	```
@@ -71,9 +74,9 @@ Warning: the backup superblock/group descriptors at block 131072 contain bad blo
 [ INFO ] DONE. ROOTFS was copied to EMMC
 [ SUCCESS ] Successful installed, please unplug the USB, re-insert the power supply to start the armbian.
 ```
-5. По завершению работы скрипта флешку не вытаскиваем, передергиваем питание, грузимся еще раз с флешки и не более
-6. Теперь вынимаем флешку и передергиваем питание
-7. Должен грузиться armbian с eMMC
+6. По завершению работы скрипта флешку не вытаскиваем, передергиваем питание, грузимся еще раз с флешки и не более
+7. Теперь вынимаем флешку и передергиваем питание
+8. Должен грузиться armbian с eMMC
 
 ### Как обновить ядро
 
